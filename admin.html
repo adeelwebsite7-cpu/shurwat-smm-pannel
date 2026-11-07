@@ -34,7 +34,7 @@ label{font-size:12px;color:#94a3b8;font-weight:700}
 <div class="top" id="topBar" style="display:none"><div style="display:flex;align-items:center;gap:10px;min-width:0"><img id="topLogo" style="width:42px;height:42px;border-radius:12px"><div style="min-width:0"><b style="font-size:18px">SHURWAT <span style="background:linear-gradient(90deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">SMM</span></b><br><small style="color:#94a3b8;letter-spacing:2px;font-size:10px">ADMIN PANEL</small></div></div><div style="display:flex;gap:8px"><button class="btn2" onclick="location.reload()">↻ Refresh</button><button class="btn2" onclick="adminLogout()">Logout</button></div></div>
 
 <!-- LOGIN -->
-<div id="loginBox"><div style="text-align:center;padding:12px;background:#065f46;color:#fff;font-size:12px;font-weight:800">🔐 YE ADMIN PANEL HAI — USER PANEL NAHI</div><div class="auth-screen"><div class="auth-card"><img class="auth-logo" id="authLogo"><h1 style="font-family:Sora;margin:14px 0 4px">Admin Panel</h1><div style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);padding:10px;border-radius:12px;font-size:12px;font-weight:700;color:#86efac;margin-bottom:12px">✅ NO GMAIL NEEDED &nbsp;•&nbsp; NO KEY NEEDED<br><span style="color:#fff">Sirf PIN likho — Bas!</span></div><p style="color:#94a3b8;font-size:13px;margin:0 0 16px">Enter Admin PIN to continue</p><label style="text-align:left;display:block">Admin PIN</label><input id="pinInput" type="password" placeholder="Enter PIN" autocomplete="off"><div id="pinErr" style="display:none;color:#fca5a5;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);padding:10px;border-radius:12px;font-size:12px;margin:8px 0"></div><button class="btn" onclick="adminLogin()">Unlock Admin →</button><p style="color:#64748b;font-size:11px;margin-top:14px">Default PIN: SHURWAT123<br>Change it from Settings after login.</p></div></div></div>
+<div id="blockedBox" class="hidden"><div class="auth-screen"><div class="auth-card" style="border-color:#ef4444"><div style="font-size:48px">🚫</div><h1 style="font-family:Sora;margin:10px 0 4px">Device Blocked</h1><p style="color:#fca5a5;font-size:13px;line-height:1.6">This Admin Panel is locked to the owner's device.<br>This device is not allowed.<br><br>Website has been blocked for this device.</p><p style="color:#64748b;font-size:11px">If you are the owner, open Admin from your first device.</p></div></div></div><div id="loginBox"><div style="text-align:center;padding:12px;background:#065f46;color:#fff;font-size:12px;font-weight:800">🔐 YE ADMIN PANEL HAI — USER PANEL NAHI</div><div class="auth-screen"><div class="auth-card"><img class="auth-logo" id="authLogo"><h1 style="font-family:Sora;margin:14px 0 4px">Admin Panel</h1><div style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);padding:10px;border-radius:12px;font-size:12px;font-weight:700;color:#86efac;margin-bottom:12px">✅ NO GMAIL NEEDED &nbsp;•&nbsp; NO KEY NEEDED<br><span style="color:#fff">Sirf PIN likho — Bas!</span></div><p style="color:#94a3b8;font-size:13px;margin:0 0 16px">Enter Admin PIN to continue</p><label style="text-align:left;display:block">Admin PIN</label><input id="pinInput" type="password" placeholder="Enter PIN" autocomplete="off"><div id="pinErr" style="display:none;color:#fca5a5;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);padding:10px;border-radius:12px;font-size:12px;margin:8px 0"></div><button class="btn" onclick="adminLogin()">Unlock Admin →</button><p style="color:#64748b;font-size:11px;margin-top:14px">New PIN set — use your new PIN below<br>Change it from Settings after login.</p></div></div></div>
 
 <!-- APP -->
 <div class="wrap hidden" id="appBox">
@@ -75,14 +75,81 @@ const LOGO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAA
 document.getElementById('authLogo').src=LOGO; document.getElementById('topLogo').src=LOGO;
 function toast(m){let el=document.getElementById('toast'); el.textContent=m; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),2500);}
 window.toast=toast;
-let DEFAULT_PIN='SHURWAT123'; let savedPIN=localStorage.getItem('shurwat_admin_pin')||DEFAULT_PIN;
+let DEFAULT_PIN='SHURWAT-7392-ADMIN'; let savedPIN=localStorage.getItem('shurwat_admin_pin')||DEFAULT_PIN;
 let users={}, services={}, cats={}, orders={}, deposits={}, vouchers={}, settings={};
 let selUser=null;
-function getPIN(){ return settings.adminPin || savedPIN || DEFAULT_PIN; }
-window.adminLogin=()=>{ let v=document.getElementById('pinInput').value.trim(); let err=document.getElementById('pinErr'); if(v===getPIN()){ sessionStorage.setItem('shurwat_admin','1'); showApp(); } else { err.style.display='block'; err.textContent='Wrong PIN. Try again.'; } };
+function getPIN(){ 
+  // Old leaked PIN SHURWAT123 is dead - never accept it again
+  if(settings.adminPin && settings.adminPin!=='SHURWAT123') return settings.adminPin;
+  if(savedPIN && savedPIN!=='SHURWAT123') return savedPIN;
+  return DEFAULT_PIN; 
+}
+// ===== DEVICE LOCK - Only owner's first device can open Admin =====
+function getDeviceId(){
+  try{
+    let id=localStorage.getItem('shurwat_admin_device');
+    if(!id){
+      let s=navigator.userAgent+'|'+screen.width+'x'+screen.height+'|'+(Intl.DateTimeFormat().resolvedOptions().timeZone||'')+'|'+navigator.language;
+      let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+      id='DEV-'+Math.abs(h).toString(36).toUpperCase()+'-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+      localStorage.setItem('shurwat_admin_device',id);
+    }
+    return id;
+  }catch(e){ return 'DEV-UNKNOWN'; }
+}
+async function checkDeviceLock(){
+  let myDev=getDeviceId();
+  // If this device was already blocked locally, block instantly
+  try{ if(localStorage.getItem('shurwat_admin_blocked')==='1'){ showBlocked(); return false; } }catch(e){}
+  try{
+    let snap=await get(ref(db,'settings/adminDeviceId'));
+    let lockedDev=snap.val();
+    if(!lockedDev){
+      // First login after update = owner device - lock it now
+      await set(ref(db,'settings/adminDeviceId'),myDev);
+      await set(ref(db,'settings/adminDeviceLockedAt'),Date.now());
+      return true;
+    }
+    if(lockedDev===myDev) return true;
+    // OTHER DEVICE - block immediately
+    try{
+      localStorage.setItem('shurwat_admin_blocked','1');
+      sessionStorage.removeItem('shurwat_admin');
+      await set(ref(db,'blockedDevices/'+myDev.replace(/[^A-Za-z0-9_-]/g,'_')),{device:myDev,blockedAt:Date.now(),reason:'Tried to open Admin from non-owner device'});
+    }catch(e){}
+    showBlocked();
+    return false;
+  }catch(e){
+    // If Firebase not reachable, allow only if this device already has local lock flag from owner
+    return true;
+  }
+}
+function showBlocked(){
+  document.getElementById('loginBox').classList.add('hidden');
+  document.getElementById('appBox').classList.add('hidden');
+  let tb=document.getElementById('topBar'); if(tb) tb.style.display='none';
+  let bb=document.getElementById('blockedBox'); if(bb) bb.classList.remove('hidden');
+  document.body.style.pointerEvents='auto';
+}
+
+window.adminLogin=async()=>{ 
+  let v=document.getElementById('pinInput').value.trim(); 
+  let err=document.getElementById('pinErr');
+  // Old leaked PIN - always reject, even if someone tries it
+  if(v==='SHURWAT123'){ err.style.display='block'; err.textContent='This old PIN is expired. Use your new PIN.'; return; }
+  if(v!==getPIN()){ err.style.display='block'; err.textContent='Wrong PIN. Try again.'; return; }
+  // PIN is correct - now check device. If not owner device, block instantly.
+  err.style.display='none'; err.textContent='Checking device...';
+  document.getElementById('pinInput').disabled=true;
+  let ok=await checkDeviceLock();
+  document.getElementById('pinInput').disabled=false;
+  if(!ok) return;
+  sessionStorage.setItem('shurwat_admin','1'); 
+  showApp(); 
+};
 window.adminLogout=()=>{ sessionStorage.removeItem('shurwat_admin'); location.reload(); };
 function showApp(){ document.getElementById('loginBox').classList.add('hidden'); document.getElementById('appBox').classList.remove('hidden'); document.getElementById('topBar').style.display='flex'; loadAll(); }
-if(sessionStorage.getItem('shurwat_admin')==='1') showApp();
+if(sessionStorage.getItem('shurwat_admin')==='1'){ (async()=>{ let ok=await checkDeviceLock(); if(ok) showApp(); })(); }
 window.showTab=(t)=>{ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.t===t)); ['dash','orders','deposits','services','cats','vouchers','users','settings'].forEach(id=>{ document.getElementById('tab-'+id).classList.toggle('hidden', id!==t); }); window.scrollTo({top:0,behavior:'smooth'}); };
 function loadAll(){
   onValue(ref(db,'users'),s=>{ users=s.val()||{}; renderStats(); renderUsers(); renderOrders(); });
