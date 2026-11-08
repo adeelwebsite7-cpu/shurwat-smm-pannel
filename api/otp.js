@@ -47,7 +47,10 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   const url = String(req.url || '');
-  const isVerify = url.includes('/verify');
+  const hdr = String(req.headers['x-otp-action'] || req.headers['x-path'] || '');
+  // Vercel rewrite strips /verify from URL, so also check body.code + header + referer
+  const bodyPeek = req.body && typeof req.body === 'object' ? req.body : {};
+  const isVerify = url.includes('/verify') || hdr.includes('verify') || !!(bodyPeek.code || bodyPeek.otp);
   try {
     const body = await readBody(req);
     if (isVerify) {
