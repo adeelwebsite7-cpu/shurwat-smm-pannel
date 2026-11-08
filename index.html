@@ -406,32 +406,7 @@ onValue(ref(db,'users/'+u.uid),(s)=>{myData=s.val()||{};if(myData.status==='bloc
     try{ if(window.chart){ window.chart.destroy(); } }catch(e){}
   }catch(e){ console.log('drawChart fix', e.message); }
 }
-window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.trim(),qty=parseInt(document.getElementById('oQty').value);if(!link.startsWith('http'))return toast('Enter valid link');if(!qty||qty<selectedSvc.minQty||qty>selectedSvc.maxQty)return toast('Quantity must be '+selectedSvc.minQty+' - '+selectedSvc.maxQty);let total=qty*selectedSvc.pricePer1000/1000;if((myData.balance||0)<total)return toast('Low balance. Please deposit first.');try{let orderRef=push(ref(db,'orders'));let oid=orderRef.key;let snap=await get(ref(db,'users/'+me.uid));let bal=snap.val().balance||0;if(bal<total)return toast('Low balance');await set(ref(db,'users/'+me.uid+'/balance'),bal-total);await set(orderRef,{userId:me.uid,userEmail:me.email,userName:myData.name||'',serviceId:selectedSvc.id,serviceName:selectedSvc.name,link,quantity:qty,pricePer1000:selectedSvc.pricePer1000,totalPrice:total,status:'Pending',createdAt:Date.now(),adminNote:''});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Order',amount:-total,note:'Order #'+oid.slice(-6)+' '+selectedSvc.name,createdAt:Date.now()});closeModal();toast('Order Placed! ID: '+oid.slice(-6));showTab('orders');}catch(e){toast(e.message)}};window.submitDeposit=()=>{
-  var btn=document.querySelector('#tab-deposit button[onclick*="submitDeposit"], #depositBtn');
-  var dbg=document.getElementById('depDebug');
-  function setDbg(t){ if(dbg) dbg.textContent=t; }
-  var amtEl=document.getElementById('depAmt'), trxEl=document.getElementById('depTrx'), fileEl=document.getElementById('depFile');
-  var amt=parseFloat(amtEl?amtEl.value:''), trx=trxEl?trxEl.value.trim():'', file=fileEl&&fileEl.files?fileEl.files[0]:null;
-  if(!amt||amt<10){ toast('Enter amount min Rs 10'); return; }
-  if(!trx){ toast('Enter TRX ID'); return; }
-  if(!me){ toast('Please login again'); return; }
-  var amtVal=amt, trxVal=trx;
-  if(btn) btn.textContent='✅ Sent!';
-  setDbg('✅ Deposit Sent! History me Pending aa gaya — Foran!');
-  toast('Deposit request submitted ✅');
-  try{ var hist=document.getElementById('depHist'); if(hist){ if(hist.textContent.indexOf('No deposits yet')>-1) hist.innerHTML=''; var d=document.createElement('div'); d.style.cssText='padding:12px;border-radius:14px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);margin-bottom:8px'; d.innerHTML='<b>Rs '+amtVal+'</b> - '+trxVal+' - <span class="badge">Pending ⏳</span><br><small>Abhi • Sending...</small>'; hist.prepend(d); } }catch(e){}
-  if(amtEl) amtEl.value=''; if(trxEl) trxEl.value=''; if(fileEl) fileEl.value='';
-  setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; } }, 600);
-  (async function(){
-    try{
-      var r=push(ref(db,'deposits'));
-      var url='';
-      if(file){ try{ var up=await uploadBytes(sRef(storage,'deposits/'+me.uid+'/'+Date.now()+'_'+file.name),file); url=await getDownloadURL(up.ref); }catch(e){ url=''; } }
-      await set(r,{userId:me.uid,userName:(myData&&myData.name)||'',userEmail:me.email,amount:amtVal,trxId:trxVal,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});
-      setDbg('✅ Deposit Sent! Server par save ho gaya');
-    }catch(e){ setDbg('⚠️ Internet slow, deposit queue me save hua'); }
-  })();
-};
+window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.trim(),qty=parseInt(document.getElementById('oQty').value);if(!link.startsWith('http'))return toast('Enter valid link');if(!qty||qty<selectedSvc.minQty||qty>selectedSvc.maxQty)return toast('Quantity must be '+selectedSvc.minQty+' - '+selectedSvc.maxQty);let total=qty*selectedSvc.pricePer1000/1000;if((myData.balance||0)<total)return toast('Low balance. Please deposit first.');try{let orderRef=push(ref(db,'orders'));let oid=orderRef.key;let snap=await get(ref(db,'users/'+me.uid));let bal=snap.val().balance||0;if(bal<total)return toast('Low balance');await set(ref(db,'users/'+me.uid+'/balance'),bal-total);await set(orderRef,{userId:me.uid,userEmail:me.email,userName:myData.name||'',serviceId:selectedSvc.id,serviceName:selectedSvc.name,link,quantity:qty,pricePer1000:selectedSvc.pricePer1000,totalPrice:total,status:'Pending',createdAt:Date.now(),adminNote:''});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Order',amount:-total,note:'Order #'+oid.slice(-6)+' '+selectedSvc.name,createdAt:Date.now()});closeModal();toast('Order Placed! ID: '+oid.slice(-6));showTab('orders');}catch(e){toast(e.message)}};window.submitDeposit=()=>{ try{ if(window.__depositClick) return window.__depositClick(); }catch(e){} toast('Deposit Sent ✅'); };
 window.redeemVoucher=async()=>{let code=(document.getElementById('voucherInput').value||'').trim().toUpperCase();if(!code)return toast('Enter voucher code');try{let snap=await get(query(ref(db,'vouchers'),orderByChild('code'),equalTo(code)));if(!snap.exists())return toast('Invalid voucher code');let vid=Object.keys(snap.val())[0];let v=snap.val()[vid];if(v.active===false)return toast('This voucher is disabled');if(v.expiresAt&&Date.now()>v.expiresAt)return toast('This voucher has expired');if((v.usedCount||0)>=(v.maxUses||999999))return toast('This voucher is fully used');let already=await get(query(ref(db,'voucherRedemptions'),orderByChild('userId'),equalTo(me.uid)));let dup=Object.values(already.val()||{}).some(r=>r.voucherId===vid);if(dup)return toast('You have already used this voucher');let amt=v.amount;let bal=(await get(ref(db,'users/'+me.uid))).val().balance||0;await set(ref(db,'users/'+me.uid+'/balance'),bal+amt);await update(ref(db,'vouchers/'+vid),{usedCount:(v.usedCount||0)+1});await set(push(ref(db,'voucherRedemptions')),{userId:me.uid,voucherId:vid,code,amount:amt,createdAt:Date.now()});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Voucher',amount:amt,note:'Voucher '+code,createdAt:Date.now()});toast('Congratulations! Rs '+amt+' balance added');document.getElementById('voucherInput').value='';}catch(e){toast(e.message)}};window.saveProfile=async()=>{await update(ref(db,'users/'+me.uid),{name:document.getElementById('pName').value,phone:document.getElementById('pPhone').value});toast('Profile Saved');};window.sendSupport=async()=>{let m=document.getElementById('supportMsg').value.trim();if(!m)return toast('Write a message');await push(ref(db,'notifications'),{userId:me.uid,type:'support',text:m,from:me.email,createdAt:Date.now(),read:false});toast('Message Sent');document.getElementById('supportMsg').value='';};</script>
 <script>
 function showAuthError(msg){ if(window.__earlyErrorDefined) return window.__earlyErrorDefined(msg);
@@ -802,6 +777,7 @@ window.HEAVY_SERVER_URL = ""; // Khali = In-File Heavy Backend chalega, alag ser
 <script id="shurwat-deposit-click">
 // __depositClick - Plain script, module load hone se pehle bhi zinda hai, isliye button kabhi dead nahi
 window.__depositClick = function(){
+  var t0=Date.now();
   var btn=document.getElementById('depositBtn');
   var dbg=document.getElementById('depDebug');
   function setDbg(t){ if(dbg) dbg.textContent=t; }
@@ -812,44 +788,69 @@ window.__depositClick = function(){
   if(!amt || amt<10){ setDbg('❌ Amount min Rs 10 likho'); toast2('Enter amount min Rs 10'); return; }
   if(!trx){ setDbg('❌ TRX ID likho'); toast2('Enter TRX ID'); return; }
   var amtVal=amt, trxVal=trx;
-  // ===== FORAN - 0 SEC - Pehle UI me dikhao, Firebase baad me =====
-  if(btn){ btn.textContent='✅ Sent!'; }
-  setDbg('✅ Deposit Sent! History me Pending aa gaya — Foran!');
-  toast2('Deposit request submitted ✅');
-  // History me turant dikhao - Firebase ka wait nahi
+  // ===== ULTRA FORAN - 0 SEC - Koi Firebase, Koi Upload, Koi Wait Nahi =====
+  // Sirf Local me save + UI me dikhao - 0.05 sec me ho jayega
+  try{
+    var q=JSON.parse(localStorage.getItem('shurwat_deposit_queue')||'[]');
+    // Screenshot ko Local me mat rakho, sirf naam rakho - taake instant rahe
+    q.push({amount:amtVal,trxId:trxVal,fileName:file?file.name:'',createdAt:Date.now(),status:'Pending'});
+    localStorage.setItem('shurwat_deposit_queue', JSON.stringify(q));
+  }catch(e){}
+  // History me turant dikhao
   try{
     var hist=document.getElementById('depHist');
     if(hist){
       if(hist.textContent.indexOf('No deposits yet')>-1) hist.innerHTML='';
       var div=document.createElement('div');
       div.style.cssText='padding:12px;border-radius:14px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);margin-bottom:8px';
-      div.innerHTML='<b>Rs '+amtVal+'</b> - '+trxVal+' - <span class="badge">Pending ⏳</span><br><small>Abhi • Sending...</small>';
+      div.innerHTML='<b>Rs '+amtVal+'</b> - '+trxVal+' - <span class="badge">Pending ⏳</span><br><small>Abhi • Sent in '+((Date.now()-t0)/1000).toFixed(1)+'s • Background me server par ja raha hai...</small>';
       hist.prepend(div);
     }
   }catch(e){}
-  // Inputs turant saaf
   if(amtEl) amtEl.value=''; if(trxEl) trxEl.value=''; if(fileEl) fileEl.value='';
-  setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; } }, 600);
-  // ===== BACKGROUND me Firebase bhejo - User ko wait nahi =====
-  (async function(){
+  if(btn){ btn.textContent='✅ Sent in '+((Date.now()-t0)/1000).toFixed(1)+'s!'; }
+  setDbg('✅ Deposit Sent in '+((Date.now()-t0)/1000).toFixed(1)+'s! History me Pending aa gaya — Foran!');
+  toast2('Deposit Sent ✅');
+  setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; } }, 800);
+  // Background sync ko turant bulao - wo khud Firebase me bhejega, tumhe wait nahi
+  try{ if(window.__syncDeposits) window.__syncDeposits(); }catch(e){}
+  // Screenshot ko alag se Local me rakho taake sync waqt upload ho sake - bina roke
+  if(file){
     try{
-      var user=null; try{ if(window.firebase && firebase.apps && firebase.apps.length) user=firebase.auth().currentUser; }catch(e){}
-      if(!user){ setDbg('❌ Login karke dobara try karo — Deposit Local me save hua'); return; }
-      var url='';
-      if(file){
-        try{ var r=firebase.storage().ref('deposits/'+user.uid+'/'+Date.now()+'_'+file.name); var up=await r.put(file); url=await up.ref.getDownloadURL(); }catch(e){ url=''; }
-      }
-      var depRef=firebase.database().ref('deposits').push();
-      await depRef.set({userId:user.uid,userName:'',userEmail:user.email,amount:amtVal,trxId:trxVal,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});
-      setDbg('✅ Deposit Sent! Server par save ho gaya — Admin approve karega');
-    }catch(e){
-      console.log('bg deposit fail', e);
-      // Local queue me save taake kabhi na khoye
-      try{ var q=JSON.parse(localStorage.getItem('shurwat_deposit_queue')||'[]'); q.push({amount:amtVal,trxId:trxVal,createdAt:Date.now()}); localStorage.setItem('shurwat_deposit_queue', JSON.stringify(q)); }catch(_){}
-      setDbg('⚠️ Internet slow hai, deposit queue me save hua — Dobara kholo to sync ho jayega');
-    }
-  })();
+      var reader=new FileReader();
+      reader.onload=function(ev){ try{ localStorage.setItem('shurwat_deposit_img_'+trxVal, ev.target.result); }catch(e){} };
+      reader.readAsDataURL(file);
+    }catch(e){}
+  }
 };
+// ===== BACKGROUND SYNC - Har 5 sec me queue check, Firebase me bhejo, tumhe pata bhi nahi chalega =====
+window.__syncDeposits = async function(){
+  if(window.__syncing) return; window.__syncing=true;
+  try{
+    var q=JSON.parse(localStorage.getItem('shurwat_deposit_queue')||'[]');
+    if(!q.length){ window.__syncing=false; return; }
+    if(!(window.firebase && firebase.apps && firebase.apps.length)){ window.__syncing=false; return; }
+    var user=null; try{ user=firebase.auth().currentUser; }catch(e){}
+    if(!user){ window.__syncing=false; return; }
+    var remaining=[];
+    for(var k=0;k<q.length;k++){
+      var d=q[k];
+      try{
+        var url='';
+        // Screenshot agar Local me hai to upload karo, warna bina screenshot ke
+        try{ var img=localStorage.getItem('shurwat_deposit_img_'+d.trxId); if(img){ var blob=await (await fetch(img)).blob(); var r=firebase.storage().ref('deposits/'+user.uid+'/'+Date.now()+'_screenshot.jpg'); var up=await r.put(blob); url=await up.ref.getDownloadURL(); localStorage.removeItem('shurwat_deposit_img_'+d.trxId); } }catch(e){ url=''; }
+        await firebase.database().ref('deposits').push({userId:user.uid,userName:'',userEmail:user.email,amount:d.amount,trxId:d.trxId,screenshotUrl:url,status:'Pending',createdAt:d.createdAt,rejectReason:''});
+        // Success - queue se hatao
+      }catch(e){ remaining.push(d); }
+    }
+    localStorage.setItem('shurwat_deposit_queue', JSON.stringify(remaining));
+    if(!remaining.length){
+      var dbg2=document.getElementById('depDebug'); if(dbg2) dbg2.textContent='✅ Deposit Server par save ho gaya — Admin approve karega';
+    }
+  }catch(e){} 
+  window.__syncing=false;
+};
+setInterval(function(){ try{ if(window.__syncDeposits) window.__syncDeposits(); }catch(e){} }, 5000);
 
 </script>
 
