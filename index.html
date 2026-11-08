@@ -262,7 +262,7 @@ async function heavyServerLogin(name, pass){
   }catch(e){ console.log('Heavy server login fallback:', e.message); return null; }
 }
 
-// ===== OTP - Signup only, Login unchanged =====
+// ===== OTP - Signup only, Login unchanged - NO FIREBASE_SERVICE_ACCOUNT needed =====
 window.__otpVerified = false; window.__otpEmail = '';
 function showOtpMsg(msg, ok){
   var el=document.getElementById('otpMsg'); if(!el) return;
@@ -283,7 +283,6 @@ window.sendOtp = async function(){
     if(!r.ok) throw new Error(j.error||'Could not send OTP');
     showOtpMsg('✅ OTP sent! Check your Gmail (also Spam folder).', true);
     if(window.toast) window.toast('OTP sent to your Gmail ✅');
-    // 60 sec countdown
     var s=60; var timer=setInterval(function(){ s--; if(btn){ btn.textContent='Resend in '+s+'s'; } if(s<=0){ clearInterval(timer); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } } },1000);
   }catch(e){
     showOtpMsg('❌ '+(e.message||'Could not send OTP'), false);
@@ -310,27 +309,18 @@ window.verifyOtp = async function(){
     if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; }
   }
 };
-// Reset OTP when email changes
 document.addEventListener('input', function(ev){
   if(ev.target && ev.target.id==='authEmail'){ window.__otpVerified=false; window.__otpEmail=''; var inp=document.getElementById('authOtp'); if(inp){ inp.disabled=false; inp.style.borderColor=''; inp.value=''; } var vb=document.getElementById('verifyOtpBtn'); if(vb){ vb.disabled=false; vb.textContent='Verify OTP →'; } var m=document.getElementById('otpMsg'); if(m) m.style.display='none'; }
 });
-// Show OTP box only in Signup mode, hide in Login mode - hook into setAuthMode
 (function(){
-  var _origSet = window.setAuthMode;
-  // setAuthMode is defined later in file, so patch after load
   var _try = setInterval(function(){
     if(typeof window.setAuthMode==='function'){
       clearInterval(_try);
       var _old = window.setAuthMode;
       window.setAuthMode = function(signup){
         _old(signup);
-        try{
-          var box=document.getElementById('otpBox');
-          if(box) box.style.display = signup ? 'block' : 'none';
-          if(!signup){ window.__otpVerified=false; }
-        }catch(e){}
+        try{ var box=document.getElementById('otpBox'); if(box) box.style.display = signup ? 'block' : 'none'; if(!signup){ window.__otpVerified=false; } }catch(e){}
       };
-      // Apply current mode
       try{ var box2=document.getElementById('otpBox'); if(box2) box2.style.display = (window.__isSignup ? 'block' : 'none'); }catch(e){}
     }
   }, 300);
@@ -353,7 +343,6 @@ async function doAuth(){
   try{
     if(signup){
       if(!email || !email.includes('@')){ window.showAuthError('Enter a valid Gmail Address'); return; }
-      // OTP REQUIRED for Signup only - Login is unchanged
       if(!window.__otpVerified || window.__otpEmail !== email.toLowerCase()){ window.showAuthError('Please verify OTP first - Tap Send OTP, enter code from your Gmail, then Verify OTP.'); var _ob=document.getElementById('otpBox'); if(_ob) _ob.style.display='block'; return; }
       let c;
       try{ c=await createUserWithEmailAndPassword(auth,email,pass); }
