@@ -5,6 +5,14 @@
       "destination": "/api/debug.js"
     },
     {
+      "source": "/api/otp/send",
+      "destination": "/api/otp.js"
+    },
+    {
+      "source": "/api/otp/verify",
+      "destination": "/api/otp.js"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index.js"
     },
@@ -22,4 +30,3 @@
     }
   ]
 }
-
