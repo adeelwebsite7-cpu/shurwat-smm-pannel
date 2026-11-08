@@ -252,7 +252,52 @@ body{ padding-bottom:90px !important; }
 </style>
 
 
-<style>.shurwat-logo{width:44px!important;height:44px!important;border-radius:13px!important;object-fit:cover!important;display:block!important;flex-shrink:0!important;background:linear-gradient(135deg,#f59e0b,#ef4444)!important;border:1.5px solid rgba(255,255,255,.25)!important;box-shadow:0 6px 16px rgba(245,158,11,.35)!important}.heavy-inside .card{box-shadow:0 12px 30px rgba(0,0,0,.35)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:18px!important}.heavy-inside .btn{box-shadow:0 8px 20px rgba(124,58,237,.3)!important;font-weight:800!important}</style></head><body> <div class="top"><div style="display:flex;align-items:center;gap:10px"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:46px;height:46px;border-radius:14px;display:block"><div><div style="font-family:Sora;font-weight:800;font-size:21px">SHURWAT <span style="background:linear-gradient(90deg,#a78bfa,#60a5fa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">SMM</span></div><small style="font-size:9px;letter-spacing:3px;color:#94a3b8">PREMIUM PANEL</small></div></div><div style="display:flex;gap:8px;align-items:center"><span id="userChip" class="badge">Guest</span><button class="btn2" id="logoutBtn" style="display:none" onclick="doLogout()">Logout</button></div></div><div class="wrap"><div id="annBox"></div><div class="installHero" style="display:flex;justify-content:center;padding:6px 0;background:transparent;border:none;margin:0 0 10px"><button class="btn" id="installBtn" style="width:auto;height:32px;font-size:12px;padding:0 16px;border-radius:99px;white-space:nowrap" onclick="installPWA()">📱 Install App</button></div><div id="authBox"><div class="auth-screen"><div class="auth-orb orb1"></div><div class="auth-orb orb2"></div><div class="auth-orb orb3"></div><div class="auth-card"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:46px;height:46px;border-radius:14px;display:block"><h1 class="auth-brand">SHURWAT <span>SMM</span></h1><p class="auth-sub" id="authTitle">Welcome back</p><div class="auth-seg"><button id="segLogin" class="on" onclick="setAuthMode(false)">Login</button><button id="segSignup" onclick="setAuthMode(true)">Sign Up</button></div><div class="auth-field" id="nameField"><span class="ico">👤</span><input id="authName" placeholder="Your Name" autocomplete="username"></div><div class="auth-field" id="emailField"><span class="ico">✉️</span><input id="authEmail" placeholder="Gmail Address" type="email" autocomplete="email"></div><div id="otpBox" style="display:none">
+<style>.shurwat-logo{width:44px!important;height:44px!important;border-radius:13px!important;object-fit:cover!important;display:block!important;flex-shrink:0!important;background:linear-gradient(135deg,#f59e0b,#ef4444)!important;border:1.5px solid rgba(255,255,255,.25)!important;box-shadow:0 6px 16px rgba(245,158,11,.35)!important}.heavy-inside .card{box-shadow:0 12px 30px rgba(0,0,0,.35)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:18px!important}.heavy-inside .btn{box-shadow:0 8px 20px rgba(124,58,237,.3)!important;font-weight:800!important}</style><script>
+/* EARLY FIX - Send OTP + Loading never stuck, works even if Firebase module is still loading */
+window.__otpVerified=false; window.__otpEmail='';
+window.showAuthError=function(m){ try{ var e=document.getElementById('authError'); if(e){ e.textContent=m||''; e.style.display=m?'block':'none'; } }catch(e){} };
+window.showOtpMsg=function(m,ok){ try{ var el=document.getElementById('otpMsg'); if(!el){ el=document.createElement('div'); el.id='otpMsg'; var b=document.getElementById('sendOtpBtn'); if(b&&b.parentNode) b.parentNode.parentNode.appendChild(el); } el.textContent=m; el.style.display='block'; el.style.padding='8px 10px'; el.style.borderRadius='10px'; el.style.fontSize='13px'; el.style.marginTop='8px'; el.style.background=ok?'rgba(34,197,94,.15)':'rgba(239,68,68,.12)'; el.style.border='1px solid '+(ok?'rgba(34,197,94,.4)':'rgba(239,68,68,.3)'); el.style.color=ok?'#86efac':'#fca5a5'; }catch(e){} };
+window.sendOtp=async function(){
+  var email=(document.getElementById('authEmail').value||'').trim();
+  var name=(document.getElementById('authName').value||'').trim();
+  if(!email||!email.includes('@')){ window.showAuthError('Enter a valid Gmail Address first'); window.showOtpMsg('Enter a valid Gmail Address first',false); return; }
+  var btn=document.getElementById('sendOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+  window.showOtpMsg('Sending OTP to your Gmail... Please wait...', true);
+  var lastErr='';
+  var urls=['/api/otp/send','/api/otp','/api/otp/verify'];
+  // Try /api/otp/send first, fallback to /api/otp - Vercel rewrite safe
+  for(var i=0;i<2;i++){
+    try{
+      var r=await fetch(urls[i],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name})});
+      var j={}; try{ j=await r.json(); }catch(e){}
+      if(r.ok){ window.showOtpMsg('OTP sent! Check Gmail + Spam folder.', true); if(window.toast) window.toast('OTP sent'); var s=60; var tm=setInterval(function(){ s--; if(btn) btn.textContent='Resend in '+s+'s'; if(s<=0){ clearInterval(tm); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } } },1000); return; }
+      lastErr=j.error||('Server error '+r.status);
+      // 429 = already sent, stop retrying
+      if(r.status===429){ break; }
+      // 500 = Gmail not set up, stop retrying, show real reason
+      if(r.status===500){ break; }
+    }catch(e){ lastErr=e.message||'Network error'; }
+  }
+  window.showOtpMsg(''+lastErr, false); window.showAuthError(lastErr);
+  if(btn){ btn.disabled=false; btn.textContent='Send OTP'; }
+};
+window.verifyOtp=async function(){
+  var email=(document.getElementById('authEmail').value||'').trim();
+  var code=(document.getElementById('authOtp').value||'').trim();
+  if(!code||code.length!==6){ window.showOtpMsg('Enter 6-digit OTP from Gmail', false); return; }
+  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; }
+  try{
+    var r=await fetch('/api/otp/verify',{method:'POST',headers:{'Content-Type':'application/json','X-OTP-Action':'verify'},body:JSON.stringify({email:email,code:code,otp:code})});
+    var j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok) throw new Error(j.error||'Wrong OTP');
+    window.__otpVerified=true; window.__otpEmail=email.toLowerCase();
+    window.showOtpMsg('OTP Verified! Now create account.', true);
+    var inp=document.getElementById('authOtp'); if(inp){ inp.style.borderColor='rgba(34,197,94,.6)'; }
+    if(btn) btn.textContent='Verified ✓';
+  }catch(e){ window.showOtpMsg(''+(e.message||'Wrong OTP'), false); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } }
+};
+</script>
+</head><body> <div class="top"><div style="display:flex;align-items:center;gap:10px"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:46px;height:46px;border-radius:14px;display:block"><div><div style="font-family:Sora;font-weight:800;font-size:21px">SHURWAT <span style="background:linear-gradient(90deg,#a78bfa,#60a5fa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">SMM</span></div><small style="font-size:9px;letter-spacing:3px;color:#94a3b8">PREMIUM PANEL</small></div></div><div style="display:flex;gap:8px;align-items:center"><span id="userChip" class="badge">Guest</span><button class="btn2" id="logoutBtn" style="display:none" onclick="doLogout()">Logout</button></div></div><div class="wrap"><div id="annBox"></div><div class="installHero" style="display:flex;justify-content:center;padding:6px 0;background:transparent;border:none;margin:0 0 10px"><button class="btn" id="installBtn" style="width:auto;height:32px;font-size:12px;padding:0 16px;border-radius:99px;white-space:nowrap" onclick="installPWA()">📱 Install App</button></div><div id="authBox"><div class="auth-screen"><div class="auth-orb orb1"></div><div class="auth-orb orb2"></div><div class="auth-orb orb3"></div><div class="auth-card"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:46px;height:46px;border-radius:14px;display:block"><h1 class="auth-brand">SHURWAT <span>SMM</span></h1><p class="auth-sub" id="authTitle">Welcome back</p><div class="auth-seg"><button id="segLogin" class="on" onclick="setAuthMode(false)">Login</button><button id="segSignup" onclick="setAuthMode(true)">Sign Up</button></div><div class="auth-field" id="nameField"><span class="ico">👤</span><input id="authName" placeholder="Your Name" autocomplete="username"></div><div class="auth-field" id="emailField"><span class="ico">✉️</span><input id="authEmail" placeholder="Gmail Address" type="email" autocomplete="email"></div><div id="otpBox" style="display:none">
 <div style="display:flex;gap:8px"><div class="auth-field" style="flex:1;margin:0"><span class="ico">📩</span><input id="authOtp" placeholder="6-Digit OTP" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div><button type="button" id="sendOtpBtn" onclick="sendOtp()" style="white-space:nowrap;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:0 14px;cursor:pointer;font-weight:700;font-size:13px">Send OTP</button></div>
 <button type="button" id="verifyOtpBtn" onclick="verifyOtp()" style="width:100%;margin-top:8px;background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.4);padding:11px;border-radius:12px;cursor:pointer;font-weight:700;font-size:13px">Verify OTP →</button>
 <div id="otpMsg" style="display:none;margin-top:8px;padding:10px;border-radius:10px;font-size:12px;font-weight:700;text-align:center"></div>
@@ -285,7 +330,7 @@ window.sendOtp=async function(){
   var email=(document.getElementById('authEmail').value||'').trim();
   var name=(document.getElementById('authName').value||'').trim();
   if(!email || !email.includes('@')){ window.showAuthError('Enter a valid Gmail Address first'); return; }
-  var btn=document.getElementById('sendOtpBtn'); if(btn){ btn.diallled=true; btn.textContent='Sending...'; }
+  var btn=document.getElementById('sendOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
   showOtpMsg('Sending OTP to your Gmail...', true);
   try{
     var r=await fetch('/api/otp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name})});
@@ -293,14 +338,14 @@ window.sendOtp=async function(){
     if(!r.ok) throw new Error(j.error||'Could not send OTP');
     showOtpMsg('✅ OTP sent! Check Gmail + Spam folder.', true);
     if(window.toast) window.toast('OTP sent ✅');
-    var s=60; var tm=setInterval(function(){ s--; if(btn) btn.textContent='Resend in '+s+'s'; if(s<=0){ clearInterval(tm); if(btn){ btn.diallled=false; btn.textContent='Resend OTP'; } } },1000);
-  }catch(e){ showOtpMsg('❌ '+(e.message||'Could not send OTP'), false); if(btn){ btn.diallled=false; btn.textContent='Send OTP'; } }
+    var s=60; var tm=setInterval(function(){ s--; if(btn) btn.textContent='Resend in '+s+'s'; if(s<=0){ clearInterval(tm); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } } },1000);
+  }catch(e){ showOtpMsg('❌ '+(e.message||'Could not send OTP'), false); if(btn){ btn.disabled=false; btn.textContent='Send OTP'; } }
 };
 window.verifyOtp=async function(){
   var email=(document.getElementById('authEmail').value||'').trim();
   var code=(document.getElementById('authOtp').value||'').trim();
   if(!code || code.length!==6){ showOtpMsg('Enter 6-digit OTP from Gmail', false); return; }
-  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.diallled=true; btn.textContent='Verifying...'; }
+  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; }
   try{
     var r=await fetch('/api/otp/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,code:code})});
     var j=await r.json().catch(()=>({}));
@@ -310,19 +355,19 @@ window.verifyOtp=async function(){
     if(window.toast) window.toast('OTP Verified ✅');
     var inp=document.getElementById('authOtp'); if(inp){ inp.style.borderColor='#22c55e'; inp.diallled=true; }
     if(btn) btn.textContent='✅ Verified';
-  }catch(e){ window.__otpVerified=false; showOtpMsg('❌ '+(e.message||'Wrong OTP'), false); if(btn){ btn.diallled=false; btn.textContent='Verify OTP →'; } }
+  }catch(e){ window.__otpVerified=false; showOtpMsg('❌ '+(e.message||'Wrong OTP'), false); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } }
 };
 document.addEventListener('input', function(ev){
   if(ev.target && ev.target.id==='authEmail'){ window.__otpVerified=false; window.__otpEmail=''; var inp=document.getElementById('authOtp'); if(inp){ inp.diallled=false; inp.style.borderColor=''; inp.value=''; } var vb=document.getElementById('verifyOtpBtn'); if(vb){ vb.diallled=false; vb.textContent='Verify OTP →'; } var m=document.getElementById('otpMsg'); if(m) m.style.display='none'; }
 });
 
 async function doAuth(){
-  if(typeof window.showAuthError!=='function'){ alert('Loading... Please wait 1 second and try again.'); return; }
+  // showAuthError now defined early, never block on Loading
   window.showAuthError('');
   var _btn=document.getElementById('authBtn');
   if(_btn && _btn.diallled) return;
-  if(_btn){ _btn.diallled=true; _btn.textContent='Please wait...'; }
-  window.__authDone=function(){ if(_btn){ _btn.diallled=false; _btn.textContent=(window.__isSignup?'Create Account \u2192':'Login \u2192'); } };
+  if(_btn){ _btn.disabled=true; _btn.textContent='Please wait...'; }
+  window.__authDone=function(){ if(_btn){ _btn.disabled=false; _btn.textContent=(window.__isSignup?'Create Account \u2192':'Login \u2192'); } };
   let name=document.getElementById('authName').value.trim();
   let email=document.getElementById('authEmail').value.trim();
   let pass=document.getElementById('authPass').value;
@@ -445,7 +490,7 @@ window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.tr
   if(!amt || amt<10){ setDbg('Please enter amount min Rs 10'); toast2('Enter amount min Rs 10'); return; }
   if(!trx){ setDbg('Please enter TRX ID (numbers only)'); toast2('Enter TRX ID'); return; }
   var amtVal=amt, trxVal=trx;
-  if(btn){ btn.diallled=true; btn.textContent='Sending... 3s'; }
+  if(btn){ btn.disabled=true; btn.textContent='Sending... 3s'; }
   setDbg('Sending... Please wait 3 seconds');
   // 3 SECOND FLOW - Heavy, Premium feel - Original index same, bas 3s ke baad Pending
   var _s=3; var _iv=setInterval(function(){ _s--; if(_s>0){ if(btn) btn.textContent='Sending... '+_s+'s'; setDbg(_s===2?'Verifying TRX ID... Please wait':_s===1?'Saving Deposit... Please wait':'Sending... Please wait 3 seconds'); } },1000);
@@ -470,7 +515,7 @@ window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.tr
     await depRef.set({userId:user.uid,userName:(window.__myData&&window.__myData.name)||'',userEmail:user.email,amount:amtVal,trxId:trxVal,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});
     setDbg('Deposit Sent in 3s! Now in Pending - Admin will see it');
     toast2('Deposit request submitted');
-    if(btn){ btn.diallled=false; btn.textContent='Submit Deposit Request'; }
+    if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; }
     // Remove temp, real one will come via onValue live
     try{ var tmp=document.getElementById('dep-temp-'+trxVal); if(tmp) tmp.innerHTML='<b>Rs '+amtVal+'</b> - '+trxVal+' - <span class="badge">Pending</span><br><small>Sent to Admin</small>'; }catch(e){}
   }catch(e){
@@ -479,7 +524,7 @@ window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.tr
     try{ var q=JSON.parse(localStorage.getItem('shurwat_deposit_queue')||'[]'); q.push({amount:amtVal,trxId:trxVal,createdAt:Date.now(),status:'Pending'}); localStorage.setItem('shurwat_deposit_queue', JSON.stringify(q)); }catch(_){}
     setDbg('Deposit saved locally, syncing to Admin... If it stays, check internet and retry');
     toast2('Deposit saved, syncing to Admin...');
-    if(btn){ btn.diallled=false; btn.textContent='Submit Deposit Request'; }
+    if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; }
     try{ if(window.__syncDeposits) window.__syncDeposits(); }catch(_){}
   }
 };
@@ -817,7 +862,7 @@ window.HEAVY_SERVER_URL = ""; // Khali = In-File Heavy Backend chalega, alag ser
       if(!trx){ toast2('Enter TRX ID'); return; }
       var user=null; try{ user=compatAuth?compatAuth.currentUser:null; }catch(e){}
       if(!user){ toast2('Please login again - Login by doing dobara try do'); return; }
-      btn.diallled=true; var old=btn.textContent; btn.textContent='✅ Sent! (Fallback)';
+      btn.disabled=true; var old=btn.textContent; btn.textContent='✅ Sent! (Fallback)';
       var url='';
       if(file && compatStorage){
         try{ var ref=compatStorage.ref('deposits/'+user.uid+'/'+Date.now()+'_'+file.name); var up=await ref.put(file); url=await up.ref.getDownloadURL(); }catch(e){ console.log('fallback upload skip', e.message); url=''; }
@@ -825,8 +870,8 @@ window.HEAVY_SERVER_URL = ""; // Khali = In-File Heavy Backend chalega, alag ser
       await compatDb.ref('deposits').push({userId:user.uid,userName:'',userEmail:user.email,amount:amt,trxId:trx,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});
       toast2('Deposit request submitted ✅ Admin will approve soon');
       if(amtEl) amtEl.value=''; if(trxEl) trxEl.value=''; if(fileEl) fileEl.value='';
-      btn.diallled=false; btn.textContent=old||'Submit Deposit Request';
-    }catch(e){ console.log('fallback deposit error', e); try{ if(window.toast) window.toast('Deposit failed: '+e.message); else alert('Deposit failed: '+e.message); }catch(_){} try{ btn.diallled=false; btn.textContent='Submit Deposit Request'; }catch(_){} }
+      btn.disabled=false; btn.textContent=old||'Submit Deposit Request';
+    }catch(e){ console.log('fallback deposit error', e); try{ if(window.toast) window.toast('Deposit failed: '+e.message); else alert('Deposit failed: '+e.message); }catch(_){} try{ btn.disabled=false; btn.textContent='Submit Deposit Request'; }catch(_){} }
   }
   // Har button ko check - agar koi button dead hai to usko zinda do
   function bindAll(){
@@ -888,7 +933,7 @@ window.__depositClick = function(){
   if(btn){ btn.textContent='✅ Sent in '+((Date.now()-t0)/1000).toFixed(1)+'s!'; }
   setDbg('✅ Deposit Sent in '+((Date.now()-t0)/1000).toFixed(1)+'s! History me Pending aa gaya — Foran!');
   toast2('Deposit Sent ✅');
-  setTimeout(function(){ if(btn){ btn.diallled=false; btn.textContent='Submit Deposit Request'; } }, 800);
+  setTimeout(function(){ if(btn){ btn.disabled=false; btn.textContent='Submit Deposit Request'; } }, 800);
   // Background sync ko instantly bulao - wo khud Firebase me bhejega, tumhe wait not
   try{ if(window.__syncDeposits) window.__syncDeposits(); }catch(e){}
   // Screenshot ko alag se Local me rakho taake sync waqt upload ho sake - bina roke
@@ -941,7 +986,7 @@ window.addEventListener('load', function(){
     setInterval(function(){
       try{
         var btn=document.getElementById('depositBtn');
-        if(btn && btn.textContent.indexOf('Submitting')>-1){ btn.textContent='Submit Deposit Request'; btn.diallled=false; var d=document.getElementById('depDebug'); if(d) d.textContent='⚠️ Old file button atka tha, ab theek hai — Dobara Submit press'; }
+        if(btn && btn.textContent.indexOf('Submitting')>-1){ btn.textContent='Submit Deposit Request'; btn.disabled=false; var d=document.getElementById('depDebug'); if(d) d.textContent='⚠️ Old file button atka tha, ab theek hai — Dobara Submit press'; }
       }catch(e){}
     }, 3000);
   }catch(e){}
