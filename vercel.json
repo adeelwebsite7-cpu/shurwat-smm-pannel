@@ -1,36 +1,31 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/test-gmail",
-      "destination": "/api/test-gmail.js"
+      "src": "index.html",
+      "use": "@vercel/static"
     },
     {
-      "source": "/api/debug",
-      "destination": "/api/debug.js"
+      "src": "admin.html",
+      "use": "@vercel/static"
     },
     {
-      "source": "/api/otp/send",
-      "destination": "/api/otp.js"
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
     },
     {
-      "source": "/api/otp/verify",
-      "destination": "/api/otp.js"
+      "src": "/admin",
+      "dest": "/admin.html"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    },
-    {
-      "source": "/admin.html",
-      "destination": "/admin.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
