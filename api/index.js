@@ -1,4 +1,4 @@
- // ============================================================
+// ============================================================
 // SHURWAT SMM - FULLY HEAVY BACKEND SERVER v3.0
 // Node.js + Express + Firebase Admin + RAM Cache + Live Sync
 // Frontend -> Heavy Server -> Firebase (Fastest)
@@ -7,7 +7,6 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const admin = require('firebase-admin');
-let nodemailer=null; try{ nodemailer=require('nodemailer'); }catch(e){ console.log('nodemailer missing'); }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -258,89 +257,6 @@ app.post('/api/cache/clear', async (req,res)=>{
   return res.json({ok:true, msg:'Cache cleared + rewarmed'});
 });
 
-
-
-// ---------- OTP v2 - ONLY GMAIL_USER + GMAIL_APP_PASSWORD needed, NO FIREBASE_SERVICE_ACCOUNT ----------
-// Uses Firebase Realtime DB via REST (rules are open .read/.write true) + in-memory fallback
-const OTP_DB_URL = (process.env.FIREBASE_DB_URL || 'https://shurwat-3c60e-default-rtdb.firebaseio.com').replace(/\/$/,'');
-const otpMem = new Map(); // email -> {code, expiresAt, attempts, sentAt}
-function otpKey(email){ return String(email||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_'); }
-async function otpRead(email){
-  const k = otpKey(email);
-  if(otpMem.has(k)) return otpMem.get(k);
-  try{
-    const r = await fetch(OTP_DB_URL + '/emailOtps/' + k + '.json');
-    if(!r.ok) return null;
-    const v = await r.json();
-    if(v) otpMem.set(k, v);
-    return v;
-  }catch(e){ return null; }
-}
-async function otpWrite(email, data){
-  const k = otpKey(email);
-  otpMem.set(k, data);
-  try{ await fetch(OTP_DB_URL + '/emailOtps/' + k + '.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)}); }catch(e){ console.log('otp REST write fallback to memory:', e.message); }
-}
-async function otpUpdate(email, patch){
-  const k = otpKey(email);
-  const cur = otpMem.get(k) || (await otpRead(email)) || {};
-  const next = {...cur, ...patch};
-  otpMem.set(k, next);
-  try{ await fetch(OTP_DB_URL + '/emailOtps/' + k + '.json', {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(patch)}); }catch(e){}
-}
-function getMailer(){
-  if(!nodemailer) return null;
-  const user = process.env.GMAIL_USER || '';
-  const pass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g,'');
-  if(!user || !pass) return null;
-  return nodemailer.createTransport({ service:'gmail', auth:{ user, pass } });
-}
-app.post('/api/otp/send', async (req,res)=>{
-  try{
-    const { email, name } = req.body||{};
-    const em = String(email||'').toLowerCase().trim();
-    if(!em || !em.includes('@')) return res.status(400).json({error:'Enter a valid Gmail Address'});
-    const mailer = getMailer();
-    if(!mailer) return res.status(500).json({error:'OTP service not set up yet. Vercel me GMAIL_USER + GMAIL_APP_PASSWORD check karo, phir Redeploy karo.'});
-    const prev = await otpRead(em);
-    if(prev && prev.sentAt && (Date.now()-prev.sentAt < 60*1000)) return res.status(429).json({error:'OTP already sent. Wait 60 seconds and try again.'});
-    const code = String(Math.floor(100000 + Math.random()*900000));
-    const data = { email:em, code, name:name||'', sentAt:Date.now(), expiresAt:Date.now()+5*60*1000, attempts:0, verified:false };
-    await otpWrite(em, data);
-    const fromUser = process.env.GMAIL_USER;
-    try{
-      await mailer.sendMail({
-        from: '"SHURWAT SMM" <'+fromUser+'>',
-        to: em,
-        subject: 'Your SHURWAT SMM OTP - '+code,
-        html: '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0f172a;color:#fff;border-radius:16px;text-align:center"><h1 style="margin:0">SHURWAT <span style="color:#a78bfa">SMM</span></h1><p style="color:#cbd5e1">Your OTP for Sign Up</p><div style="font-size:36px;font-weight:800;letter-spacing:8px;background:#fff;color:#111;padding:16px;border-radius:12px">'+code+'</div><p style="color:#94a3b8;font-size:13px">This code expires in 5 minutes. Never share it with anyone.</p></div>',
-        text: 'Your SHURWAT SMM OTP is: '+code+' (expires in 5 minutes)'
-      });
-    }catch(e){
-      console.log('gmail send fail:', e.message);
-      return res.status(500).json({error:'Gmail login failed. GMAIL_USER aur GMAIL_APP_PASSWORD ek hi Gmail ke hone chahiye, App Password me gap nahi hona chahiye.'});
-    }
-    return res.json({ok:true, msg:'OTP sent to your Gmail'});
-  }catch(e){ console.log('otp send error', e.message); return res.status(500).json({error:'Could not send OTP. Try again.'}); }
-});
-app.post('/api/otp/verify', async (req,res)=>{
-  try{
-    const { email, code } = req.body||{};
-    const em = String(email||'').toLowerCase().trim();
-    const c = String(code||'').trim();
-    if(!em || !c) return res.status(400).json({error:'Enter OTP code'});
-    const v = await otpRead(em);
-    if(!v || !v.code) return res.status(400).json({error:'No OTP found. Tap Send OTP first.'});
-    if(Date.now() > (v.expiresAt||0)) return res.status(400).json({error:'OTP expired. Tap Send OTP again.'});
-    if((v.attempts||0) >= 5) return res.status(400).json({error:'Too many wrong tries. Tap Send OTP again.'});
-    if(String(v.code) !== c){
-      await otpUpdate(em, { attempts:(v.attempts||0)+1 });
-      return res.status(400).json({error:'Wrong OTP. Try again.'});
-    }
-    await otpUpdate(em, { verified:true, verifiedAt:Date.now() });
-    return res.json({ok:true, msg:'OTP verified'});
-  }catch(e){ console.log('otp verify error', e.message); return res.status(500).json({error:'Could not verify OTP. Try again.'}); }
-});
 
 // ---------- 13. VERCEL EXPORT ----------
 let _warmed = false;
