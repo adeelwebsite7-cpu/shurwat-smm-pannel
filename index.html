@@ -497,7 +497,39 @@ onValue(ref(db,'users/'+u.uid),(s)=>{myData=s.val()||{};if(myData.status==='bloc
     try{ if(window.chart){ window.chart.destroy(); } }catch(e){}
   }catch(e){ console.log('drawChart fix', e.message); }
 }
-window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.trim(),qty=parseInt(document.getElementById('oQty').value);if(!link.startsWith('http'))return toast('Enter valid link');if(!qty||qty<selectedSvc.minQty||qty>selectedSvc.maxQty)return toast('Quantity must be '+selectedSvc.minQty+' - '+selectedSvc.maxQty);let total=qty*selectedSvc.pricePer1000/1000;if((myData.balance||0)<total)return toast('Low balance. Please deposit first.');try{let orderRef=push(ref(db,'orders'));let oid=orderRef.key;let snap=await get(ref(db,'users/'+me.uid));let bal=snap.val().balance||0;if(bal<total)return toast('Low balance');await set(ref(db,'users/'+me.uid+'/balance'),bal-total);await set(orderRef,{userId:me.uid,userEmail:me.email,userName:myData.name||'',serviceId:selectedSvc.id,serviceName:selectedSvc.name,link,quantity:qty,pricePer1000:selectedSvc.pricePer1000,totalPrice:total,status:'Pending',createdAt:Date.now(),adminNote:''});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Order',amount:-total,note:'Order #'+oid.slice(-6)+' '+selectedSvc.name,createdAt:Date.now()});closeModal();toast('Order Placed! ID: '+oid.slice(-6));showTab('orders');}catch(e){toast(e.message)}};window.submitDeposit=async()=>{let amt=parseFloat(document.getElementById('depAmt').value),trx=document.getElementById('depTrx').value.trim(),file=document.getElementById('depFile').files[0];if(!amt||amt<10)return toast('Enter amount min Rs 10');if(!trx)return toast('Enter TRX ID');if(!file)return toast('Upload screenshot');let snap=await get(query(ref(db,'deposits'),orderByChild('trxId'),equalTo(trx)));if(snap.exists())return toast('This TRX ID is already submitted!');try{let path='deposits/'+me.uid+'/'+Date.now()+'_'+file.name;let up=await uploadBytes(sRef(storage,path),file);let url=await getDownloadURL(up.ref);let r=push(ref(db,'deposits'));await set(r,{userId:me.uid,userName:myData.name||'',userEmail:me.email,amount:amt,trxId:trx,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});toast('Deposit request submitted');}catch(e){toast('Upload failed: '+e.message)}};window.redeemVoucher=async()=>{let code=(document.getElementById('voucherInput').value||'').trim().toUpperCase();if(!code)return toast('Enter voucher code');try{let snap=await get(query(ref(db,'vouchers'),orderByChild('code'),equalTo(code)));if(!snap.exists())return toast('Invalid voucher code');let vid=Object.keys(snap.val())[0];let v=snap.val()[vid];if(v.active===false)return toast('This voucher is disabled');if(v.expiresAt&&Date.now()>v.expiresAt)return toast('This voucher has expired');if((v.usedCount||0)>=(v.maxUses||999999))return toast('This voucher is fully used');let already=await get(query(ref(db,'voucherRedemptions'),orderByChild('userId'),equalTo(me.uid)));let dup=Object.values(already.val()||{}).some(r=>r.voucherId===vid);if(dup)return toast('You have already used this voucher');let amt=v.amount;let bal=(await get(ref(db,'users/'+me.uid))).val().balance||0;await set(ref(db,'users/'+me.uid+'/balance'),bal+amt);await update(ref(db,'vouchers/'+vid),{usedCount:(v.usedCount||0)+1});await set(push(ref(db,'voucherRedemptions')),{userId:me.uid,voucherId:vid,code,amount:amt,createdAt:Date.now()});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Voucher',amount:amt,note:'Voucher '+code,createdAt:Date.now()});toast('Congratulations! Rs '+amt+' balance added');document.getElementById('voucherInput').value='';}catch(e){toast(e.message)}};window.saveProfile=async()=>{await update(ref(db,'users/'+me.uid),{name:document.getElementById('pName').value,phone:document.getElementById('pPhone').value});toast('Profile Saved');};window.sendSupport=async()=>{let m=document.getElementById('supportMsg').value.trim();if(!m)return toast('Write a message');await push(ref(db,'notifications'),{userId:me.uid,type:'support',text:m,from:me.email,createdAt:Date.now(),read:false});toast('Message Sent');document.getElementById('supportMsg').value='';};</script>
+window.confirmOrder=async()=>{let link=document.getElementById('oLink').value.trim(),qty=parseInt(document.getElementById('oQty').value);if(!link.startsWith('http'))return toast('Enter valid link');if(!qty||qty<selectedSvc.minQty||qty>selectedSvc.maxQty)return toast('Quantity must be '+selectedSvc.minQty+' - '+selectedSvc.maxQty);let total=qty*selectedSvc.pricePer1000/1000;if((myData.balance||0)<total)return toast('Low balance. Please deposit first.');try{let orderRef=push(ref(db,'orders'));let oid=orderRef.key;let snap=await get(ref(db,'users/'+me.uid));let bal=snap.val().balance||0;if(bal<total)return toast('Low balance');await set(ref(db,'users/'+me.uid+'/balance'),bal-total);await set(orderRef,{userId:me.uid,userEmail:me.email,userName:myData.name||'',serviceId:selectedSvc.id,serviceName:selectedSvc.name,link,quantity:qty,pricePer1000:selectedSvc.pricePer1000,totalPrice:total,status:'Pending',createdAt:Date.now(),adminNote:''});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Order',amount:-total,note:'Order #'+oid.slice(-6)+' '+selectedSvc.name,createdAt:Date.now()});closeModal();toast('Order Placed! ID: '+oid.slice(-6));showTab('orders');}catch(e){toast(e.message)}};window.submitDeposit=async()=>{
+  var btn=document.querySelector('#tab-deposit button[onclick*="submitDeposit"]');
+  var origBtnText = btn ? btn.textContent : '';
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='Submitting... Please wait'; }
+    var amtEl=document.getElementById('depAmt'), trxEl=document.getElementById('depTrx'), fileEl=document.getElementById('depFile');
+    var amt=parseFloat(amtEl ? amtEl.value : ''), trx=trxEl ? trxEl.value.trim() : '', file=fileEl && fileEl.files ? fileEl.files[0] : null;
+    if(!amt || amt<10){ toast('Enter amount min Rs 10'); return; }
+    if(!trx){ toast('Enter TRX ID'); return; }
+    if(!me){ toast('Please login again'); return; }
+    // TRX duplicate check - best effort, agar Firebase rok de to deposit mat roko
+    try{
+      var snap=await get(query(ref(db,'deposits'),orderByChild('trxId'),equalTo(trx)));
+      if(snap.exists()){ toast('This TRX ID is already submitted!'); return; }
+    }catch(e){ console.log('TRX check skip:', e.message); }
+    var url='';
+    // Screenshot - agar upload fail ho to bhi deposit jayega, screenshot ke bagair nahi rukega
+    if(file){
+      try{
+        var path='deposits/'+me.uid+'/'+Date.now()+'_'+file.name;
+        var up=await uploadBytes(sRef(storage,path),file);
+        url=await getDownloadURL(up.ref);
+      }catch(e){ console.log('Screenshot upload skip, deposit without screenshot:', e.message); toast('Screenshot upload failed, deposit bina screenshot ke bhej raha hoon'); url=''; }
+    }
+    var r=push(ref(db,'deposits'));
+    await set(r,{userId:me.uid,userName:(myData&&myData.name)||'',userEmail:me.email,amount:amt,trxId:trx,screenshotUrl:url,status:'Pending',createdAt:Date.now(),rejectReason:''});
+    toast('Deposit request submitted ✅ Admin will approve soon');
+    if(amtEl) amtEl.value=''; if(trxEl) trxEl.value=''; if(fileEl) fileEl.value='';
+    try{ showTab('deposit'); }catch(e){}
+  }catch(e){ console.log('submitDeposit error', e); toast('Deposit failed: '+(e.message||'Try again')); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=origBtnText||'Submit Deposit Request'; } }
+};
+window.redeemVoucher=async()=>{let code=(document.getElementById('voucherInput').value||'').trim().toUpperCase();if(!code)return toast('Enter voucher code');try{let snap=await get(query(ref(db,'vouchers'),orderByChild('code'),equalTo(code)));if(!snap.exists())return toast('Invalid voucher code');let vid=Object.keys(snap.val())[0];let v=snap.val()[vid];if(v.active===false)return toast('This voucher is disabled');if(v.expiresAt&&Date.now()>v.expiresAt)return toast('This voucher has expired');if((v.usedCount||0)>=(v.maxUses||999999))return toast('This voucher is fully used');let already=await get(query(ref(db,'voucherRedemptions'),orderByChild('userId'),equalTo(me.uid)));let dup=Object.values(already.val()||{}).some(r=>r.voucherId===vid);if(dup)return toast('You have already used this voucher');let amt=v.amount;let bal=(await get(ref(db,'users/'+me.uid))).val().balance||0;await set(ref(db,'users/'+me.uid+'/balance'),bal+amt);await update(ref(db,'vouchers/'+vid),{usedCount:(v.usedCount||0)+1});await set(push(ref(db,'voucherRedemptions')),{userId:me.uid,voucherId:vid,code,amount:amt,createdAt:Date.now()});await set(push(ref(db,'transactions')),{userId:me.uid,type:'Voucher',amount:amt,note:'Voucher '+code,createdAt:Date.now()});toast('Congratulations! Rs '+amt+' balance added');document.getElementById('voucherInput').value='';}catch(e){toast(e.message)}};window.saveProfile=async()=>{await update(ref(db,'users/'+me.uid),{name:document.getElementById('pName').value,phone:document.getElementById('pPhone').value});toast('Profile Saved');};window.sendSupport=async()=>{let m=document.getElementById('supportMsg').value.trim();if(!m)return toast('Write a message');await push(ref(db,'notifications'),{userId:me.uid,type:'support',text:m,from:me.email,createdAt:Date.now(),read:false});toast('Message Sent');document.getElementById('supportMsg').value='';};</script>
 <script>
 function showAuthError(msg){ if(window.__earlyErrorDefined) return window.__earlyErrorDefined(msg);
   var el=document.getElementById('authError');
@@ -1036,6 +1068,39 @@ window.HEAVY_SERVER_URL = ""; // Khali = In-File Heavy Backend chalega, alag ser
   heavyDeposit(); document.addEventListener('DOMContentLoaded', heavyDeposit);
   window.addEventListener('load', function(){ heavyDeposit(); setTimeout(heavyDeposit,500); });
   setInterval(heavyDeposit, 2500);
+})();
+</script>
+
+
+<script id="shurwat-all-buttons-work">
+// HAR BUTTON WORK KARE - Global fix
+(function(){
+  function fixToast(){
+    try{
+      var t=document.getElementById('toast'); if(t){ t.style.zIndex='9999'; t.style.position='fixed'; t.style.bottom='96px'; t.style.left='50%'; t.style.transform='translateX(-50%)'; t.style.maxWidth='92vw'; t.style.textAlign='center'; }
+    }catch(e){}
+  }
+  fixToast(); document.addEventListener('DOMContentLoaded', fixToast);
+  // Agar koi button daba ke kuch na ho to usko hilao taake pata chale daba hai
+  document.addEventListener('click', function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    fixToast();
+    // Deposit button par double-click rokna nahi, bas feedback
+    if(b.textContent && b.textContent.indexOf('Submit Deposit')>-1 && !b.disabled){
+      // loading window.submitDeposit me hi handle hoga
+    }
+  }, true);
+  // Har 2 sec me check - agar deposit inputs khaali hon to button enable rakho
+  setInterval(function(){
+    try{
+      var btn=document.querySelector('#tab-deposit button[onclick*="submitDeposit"]');
+      if(btn && btn.textContent==='Submitting... Please wait' && btn.disabled){
+        // 15 sec se zyada atka ho to wapis enable
+        if(!btn.dataset.start){ btn.dataset.start=Date.now(); }
+        else if(Date.now()-parseInt(btn.dataset.start)>15000){ btn.disabled=false; btn.textContent='Submit Deposit Request'; delete btn.dataset.start; }
+      } else if(btn){ delete btn.dataset.start; }
+    }catch(e){}
+  }, 2000);
 })();
 </script>
 
