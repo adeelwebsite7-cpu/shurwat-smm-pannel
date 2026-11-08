@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/test-gmail",
+      "destination": "/api/test-gmail.js"
+    },
+    {
       "source": "/api/debug",
       "destination": "/api/debug.js"
     },
